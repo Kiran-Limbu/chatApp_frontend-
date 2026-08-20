@@ -1,4 +1,4 @@
-# Ripple — Frontend Architecture
+# Mero Chat — Frontend Architecture
 
 This file explains the code structure, how components connect, key functions, and where to add API/WebSocket calls when you wire the UI to a backend.
 
