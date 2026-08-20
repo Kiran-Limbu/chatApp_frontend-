@@ -8,6 +8,7 @@ interface ChatPaneProps {
   handelSendMsg: (event: FormEvent<HTMLFormElement>) => void;
   setMessageText: (value: string) => void;
   messageText: string;
+  typingNotify: [];
 }
 
 export function ChatPane({
@@ -16,22 +17,25 @@ export function ChatPane({
   handelSendMsg,
   setMessageText,
   messageText,
+  typingNotify
 }: ChatPaneProps) {
   return (
     <main className="flex h-screen flex-col overflow-hidden bg-slate-950 text-slate-100">
       <header className="border-b border-slate-800 bg-slate-900/90 px-4 py-4 sm:px-6">
         <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4">
           <div className="flex flex-col">
-          <div className="flex justify-center items-center gap-2 min-w-0">
-            <div className="flex text-xl font-semibold h-10 w-10 items-center justify-center rounded-full bg-cyan-500/20 text-cyan-300">
-              {displayName.charAt(0).toUpperCase() || "U"}
+            <div className="flex justify-center items-center gap-2 min-w-0">
+              <div className="flex text-xl font-semibold h-10 w-10 items-center justify-center rounded-full bg-cyan-500/20 text-cyan-300">
+                {displayName.charAt(0).toUpperCase() || "U"}
+              </div>
+              <p className="text-xl font-semibold text-slate-100">Default group name</p>
+              <br />
             </div>
-            <p className="text-xl font-semibold text-slate-100">Default group name</p>
-            <br />
-          </div>
-          <div className="px-[40px]">
-            <p className="text-sm font-semibold text-slate-400">Someone is typing ...</p>
-          </div>
+            <div className="px-[40px]">
+              {typingNotify.length ? (
+                <p className="text-sm font-semibold text-slate-400">{typingNotify.join(", ")} is typing ...</p>
+              ) : ""}
+            </div>
           </div>
 
           <div className="flex items-center gap-3">

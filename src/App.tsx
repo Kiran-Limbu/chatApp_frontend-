@@ -6,19 +6,25 @@ import connectWS from "./utils/ws";
 import { toast, ToastContainer } from "react-toastify";
 
 function App() {
-  const socket = useRef(null);
-  // Mock state for the UI-only Ripple experience.
+  const timer = useRef(null as any);
+  const socket = useRef(null as any);
+  
+  // Mock state for the UI-only 
   const [displayName, setDisplayName] = useState("");
   const [nameInput, setNameInput] = useState("");
   const [popupJoinScreen, setPopupJoinScreen] = useState(true);
   const [messageText, setMessageText] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
 
+  const [typingNotify, setTypingNotify] = useState<string[]>([]);
+
   useEffect(() => {
     socket.current = connectWS();
 
     //Generate the new socket id for connection
     socket.current.on("connect", () => {
+
+      //it listen while the user enter the group
       socket.current.on("userJoinRoomNotify", (userName: string): void => {
         console.log(`${userName} joined the room`);
       });
@@ -28,22 +34,64 @@ function App() {
         setMessages((prev) => [...prev, msg]);
         console.log(`Message from the server : ${msg}`);
       });
+
+      //it listen while the user typing in inputbox
+      socket.current.on("typingNotify", (userName: string): void => {
+        console.log(`${userName} is typing ....`);
+        setTypingNotify((prev) => {
+          const isExist = prev.find((typer) => typer === userName);
+          if (!isExist) {
+            return [...prev, userName];
+          }
+          return prev;
+        });
+      });
+
+      //it listen while the user stop typing in inputbox
+      socket.current.on("stopTypingNotify", (userName: string) =>{
+        setTypingNotify((prev) => prev.filter((typer) => typer !== userName))
+      })
     });
+
+    return () =>{
+      socket.current.off("userJoinRoomNotify");
+      socket.current.off("msgSendNotify");
+      socket.current.off("typingNotify");
+      socket.current.off("stopTypingNotify");
+    }
   }, []);
+
+
+  useEffect(() => {
+    if (messageText) {
+      socket.current.emit("typingNotify", displayName);
+      clearTimeout(timer.current);
+    }
+
+    timer.current = setTimeout(() => {
+      socket.current.emit("stopTypingNotify", displayName);
+    }, 1000);
+
+    return () =>{
+      clearTimeout(timer.current);
+    }
+  }, [messageText]);
+
+
   const handelSubmitJoinScreen = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const trimed = nameInput.trim();
 
-    if (!trimed){
+    if (!trimed) {
       toast.warning("Plese enter your name");
       return;
-    } 
-      
-      //this .emit method is used to send msg in server when join room btn clicked
-      socket.current.emit("joinRoom", trimed);
-  
-      setDisplayName(trimed);
-      setPopupJoinScreen(false);
+    }
+
+    //this .emit method is used to send msg in server when join room btn clicked
+    socket.current.emit("joinRoom", trimed);
+
+    setDisplayName(trimed);
+    setPopupJoinScreen(false);
 
 
 
@@ -93,7 +141,7 @@ function App() {
           setNameInput={setNameInput}
           handelSubmitJoinScreen={handelSubmitJoinScreen}
         />
-      ) : (  
+      ) : (
         <div className="min-h-screen w-full bg-slate-950 text-slate-100">
           <div className="mx-auto flex min-h-screen max-w-[1560px] flex-col px-4 py-5 sm:px-6 lg:px-8">
             <div className="grid flex-1 gap-4 ">
@@ -103,6 +151,7 @@ function App() {
                 handelSendMsg={handelSendMsg}
                 setMessageText={setMessageText}
                 messageText={messageText}
+                typingNotify={typingNotify}
               />
             </div>
           </div>
