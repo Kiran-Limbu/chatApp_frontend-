@@ -11,7 +11,7 @@ export function JoinScreen({ nameInput, setNameInput, handelSubmitJoinScreen }: 
     <div className="min-h-screen w-full bg-slate-950 text-slate-100 px-4 py-10 sm:px-6">
       <div className="mx-auto flex max-w-2xl flex-col gap-8 rounded-[32px] border border-white/10 bg-slate-900/95 p-10 shadow-soft">
         <div>
-          <p className="text-sm uppercase tracking-[0.35em] text-cyan-300/80">Ripple</p>
+          <p className="text-sm uppercase tracking-[0.35em] text-cyan-300/80">Mero Chat</p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">
             Join the conversation.
           </h1>
@@ -35,7 +35,7 @@ export function JoinScreen({ nameInput, setNameInput, handelSubmitJoinScreen }: 
             type="submit"
             className="min-h-[54px] rounded-3xl bg-cyan-400 px-6 text-sm font-semibold uppercase tracking-[0.18em] text-slate-950 transition hover:bg-cyan-300"
           >
-            Enter Ripple
+            Enter Mero Chat
           </button>
         </form>
 
