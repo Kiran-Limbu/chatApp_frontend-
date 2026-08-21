@@ -43,7 +43,8 @@ export function JoinScreen({ nameInput, setNameInput, handelSubmitJoinScreen }: 
           <p className="font-semibold text-slate-100">What to expect</p>
           <ul className="space-y-2 pl-4 text-slate-400">
             <li>• Live chat panels with direct and group flows.</li>
-            <li>• Responsive sidebar, inline new-chat creator, and typing cues.</li>
+            <li>• Real-Time message send and receiver .</li>
+            <li>• Real-Time notify when user is text something into the text area .</li>
           </ul>
         </div>
       </div>

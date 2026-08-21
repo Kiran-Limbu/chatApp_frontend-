@@ -1,4 +1,4 @@
-﻿import { FormEvent, useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import { ChatPane } from "./components/ChatPane";
 import { JoinScreen } from "./components/JoinScreen";
 import type { Message } from "./types/chat.types";
@@ -78,7 +78,7 @@ function App() {
   }, [messageText]);
 
 
-  const handelSubmitJoinScreen = (e: FormEvent<HTMLFormElement>) => {
+  const handelSubmitJoinScreen = (e: any) => {
     e.preventDefault();
     const trimed = nameInput.trim();
 
@@ -97,7 +97,7 @@ function App() {
 
   };
 
-  const handelSendMsg = (e: FormEvent<HTMLFormElement>) => {
+  const handelSendMsg = (e: any) => {
     e.preventDefault();
     const trimmed = messageText.trim();
     if (!trimmed) return;

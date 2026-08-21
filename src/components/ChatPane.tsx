@@ -1,14 +1,13 @@
-import type { FormEvent } from "react";
 import { MessageBubble } from "./MessageBubble";
 import type { Message } from "../types/chat.types";
 
 interface ChatPaneProps {
   messages: Message[];
   displayName: string;
-  handelSendMsg: (event: FormEvent<HTMLFormElement>) => void;
+  handelSendMsg: (event: any) => void;
   setMessageText: (value: string) => void;
   messageText: string;
-  typingNotify: [];
+  typingNotify: string[];
 }
 
 export function ChatPane({
