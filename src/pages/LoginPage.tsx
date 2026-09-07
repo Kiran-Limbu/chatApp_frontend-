@@ -1,16 +1,12 @@
 
-import { useEffect, useRef, useState, type MouseEvent } from 'react'
+import { useEffect, useRef, type MouseEvent } from 'react'
 import connectWS from '../utils/ws';
-import { useNavigate } from 'react-router-dom';
 
 
 const LoginPage = () => {
 
   const socket = useRef(null as any);
 
-   const navigate = useNavigate();
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('');
   
   useEffect(() =>{
     socket.current = connectWS();
@@ -20,6 +16,8 @@ const LoginPage = () => {
   //   navigate("/user/chat");
   // })
 
+  /*
+  
     const handelSubmitJoinScreen = (e: any) => {
     e.preventDefault();
     // const trimed = nameInput.trim();
@@ -38,6 +36,8 @@ const LoginPage = () => {
 
 
   };
+
+   */
 
 
   const handleGoogleAuth = async (e: MouseEvent<HTMLButtonElement>) => {

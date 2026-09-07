@@ -1,22 +1,18 @@
 ﻿import { useEffect, useRef, useState } from "react";
 import { ChatPane } from "./components/ChatPane.tsx";
-import { JoinScreen } from "./components/JoinScreen.tsx";
 import type { Message } from "./types/chat.types.ts";
 import connectWS from "./utils/ws.ts";
-import { toast, ToastContainer } from "react-toastify";
 import LoginPage from "./pages/LoginPage.tsx";
 import { Route, Routes } from "react-router-dom";
 import UserProtectedRoute from "./components/protected-route/UserProtectedRoute.tsx";
-import { setUserCredentials } from "./services/auth.services.ts";
 import GenerateToken from "./components/GenerateToken.tsx";
+import { ToastContainer } from "react-toastify/unstyled";
 
 function App() {
   const timer = useRef(null as any);
   const socket = useRef(null as any);
 
   const [displayName, setDisplayName] = useState("");
-  const [nameInput, setNameInput] = useState("");
-  const [popupJoinScreen, setPopupJoinScreen] = useState(true);
   const [messageText, setMessageText] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -79,21 +75,6 @@ function App() {
     };
   }, [messageText]);
 
-  const handelSubmitJoinScreen = (e: any) => {
-    e.preventDefault();
-    const trimed = nameInput.trim();
-
-    if (!trimed) {
-      toast.warning("Plese enter your name");
-      return;
-    }
-
-    //this .emit method is used to send msg in server when join room btn clicked
-    socket.current.emit("joinRoom", trimed);
-
-    setDisplayName(trimed);
-    setPopupJoinScreen(false);
-  };
 
   const handelSendMsg = (e: any) => {
     e.preventDefault();
