@@ -1,15 +1,19 @@
 ﻿import { useEffect, useRef, useState } from "react";
-import { ChatPane } from "./components/ChatPane";
-import { JoinScreen } from "./components/JoinScreen";
-import type { Message } from "./types/chat.types";
-import connectWS from "./utils/ws";
+import { ChatPane } from "./components/ChatPane.tsx";
+import { JoinScreen } from "./components/JoinScreen.tsx";
+import type { Message } from "./types/chat.types.ts";
+import connectWS from "./utils/ws.ts";
 import { toast, ToastContainer } from "react-toastify";
+import LoginPage from "./pages/LoginPage.tsx";
+import { Route, Routes } from "react-router-dom";
+import UserProtectedRoute from "./components/protected-route/UserProtectedRoute.tsx";
+import { setUserCredentials } from "./services/auth.services.ts";
+import GenerateToken from "./components/GenerateToken.tsx";
 
 function App() {
   const timer = useRef(null as any);
   const socket = useRef(null as any);
-  
-  // Mock state for the UI-only 
+
   const [displayName, setDisplayName] = useState("");
   const [nameInput, setNameInput] = useState("");
   const [popupJoinScreen, setPopupJoinScreen] = useState(true);
@@ -23,7 +27,6 @@ function App() {
 
     //Generate the new socket id for connection
     socket.current.on("connect", () => {
-
       //it listen while the user enter the group
       socket.current.on("userJoinRoomNotify", (userName: string): void => {
         console.log(`${userName} joined the room`);
@@ -48,19 +51,18 @@ function App() {
       });
 
       //it listen while the user stop typing in inputbox
-      socket.current.on("stopTypingNotify", (userName: string) =>{
-        setTypingNotify((prev) => prev.filter((typer) => typer !== userName))
-      })
+      socket.current.on("stopTypingNotify", (userName: string) => {
+        setTypingNotify((prev) => prev.filter((typer) => typer !== userName));
+      });
     });
 
-    return () =>{
+    return () => {
       socket.current.off("userJoinRoomNotify");
       socket.current.off("msgSendNotify");
       socket.current.off("typingNotify");
       socket.current.off("stopTypingNotify");
-    }
+    };
   }, []);
-
 
   useEffect(() => {
     if (messageText) {
@@ -72,11 +74,10 @@ function App() {
       socket.current.emit("stopTypingNotify", displayName);
     }, 1000);
 
-    return () =>{
+    return () => {
       clearTimeout(timer.current);
-    }
+    };
   }, [messageText]);
-
 
   const handelSubmitJoinScreen = (e: any) => {
     e.preventDefault();
@@ -92,9 +93,6 @@ function App() {
 
     setDisplayName(trimed);
     setPopupJoinScreen(false);
-
-
-
   };
 
   const handelSendMsg = (e: any) => {
@@ -134,13 +132,11 @@ function App() {
         pauseOnHover
         theme="dark"
       />
-
+      {/* 
       {popupJoinScreen ? (
-        <JoinScreen
-          nameInput={nameInput}
-          setNameInput={setNameInput}
-          handelSubmitJoinScreen={handelSubmitJoinScreen}
-        />
+       <LoginPage 
+       setPopupJoinScreen={setPopupJoinScreen}
+       />
       ) : (
         <div className="min-h-screen w-full bg-slate-950 text-slate-100">
           <div className="mx-auto flex min-h-screen max-w-[1560px] flex-col px-4 py-5 sm:px-6 lg:px-8">
@@ -156,7 +152,30 @@ function App() {
             </div>
           </div>
         </div>
-      )}
+      )} */}
+
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/wellcome" element={<GenerateToken />} />
+        
+        //only auth user can access these route
+        <Route path="/user" element={<UserProtectedRoute />}>
+          <Route
+            path="chat"
+            element={
+              <ChatPane
+                messages={messages}
+                setDisplayName={setDisplayName}
+                displayName={displayName}
+                handelSendMsg={handelSendMsg}
+                setMessageText={setMessageText}
+                messageText={messageText}
+                typingNotify={typingNotify}
+              />
+            }
+          />
+        </Route>
+      </Routes>
     </>
   );
 }
