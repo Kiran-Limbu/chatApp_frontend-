@@ -1,106 +1,219 @@
 # Mero Chat — Frontend Architecture
 
-This file explains the code structure, how components connect, key functions, and where to add API/WebSocket calls when you wire the UI to a backend.
+This document describes the frontend structure, authentication flow, real-time messaging via WebSocket, and how components are connected.
 
 ## Quick Start
 
-- Install deps: `npm install`
-- Run dev server: `npm run dev`
+```bash
+# Install dependencies
+npm install
 
-## Layout overview
+# Set environment variables (create .env.local)
+VITE_API_URL=http://localhost:5000
 
-- `src/App.tsx` — top-level container (state orchestration). Holds the mock conversation state and coordinates actions (open chat, send message, create conversation). Replace mock state updates with API calls here.
-- `src/utils/chat.ts` — mock data, helper functions (id generation, initials, color/gradient utilities) and the canonical data shape used across components.
-- `src/components/JoinScreen.tsx` — simple entry form where user types a display name. On submit it calls `submitJoin()` in `App.tsx`.
-- `src/components/ChatSidebar.tsx` — sidebar list of conversations, search, filter tabs, and inline new-chat panel. Calls back into `App.tsx` via `openChat()` and `createNewConversation()`.
-- `src/components/ChatPane.tsx` — main chat area: header (room info), message list, typing indicator, and message input form. Message submission triggers `handleSubmitMessage()` in `App.tsx`.
-- `src/components/MessageBubble.tsx` — pure rendering of a single message bubble (sent vs received, timestamp, read indicator). In group chats it displays sender name with consistent color.
-- `src/index.css` and `tailwind.config.js` — global styling and Tailwind utilities used by components.
+# Run development server
+npm run dev
 
-## Data shape
+# Build for production
+npm run build
+```
 
-The mock conversation shape is defined in `src/utils/chat.ts` and mirrors how you'd store documents in MongoDB:
+## Project Structure
 
-```js
-{
-	id: string,
-	type: 'direct' | 'group',
-	name: string,
-	online?: boolean,       // direct chats
-	members?: string[],     // group chats
-	unread: number,
-	messages: [
-		{ id, sender, text, time, status? }
-	]
+```
+src/
+├── App.tsx                    # Main router and socket orchestration
+├── main.tsx                   # React root entry point
+├── index.css                  # Global styles
+├── pages/
+│   └── LoginPage.tsx         # Google OAuth login (public)
+├── components/
+│   ├── ChatPane.tsx          # Main chat interface with message history & input
+│   ├── GenerateToken.tsx     # Token generation for websocket auth
+│   ├── MessageBubble.tsx     # Single message bubble component
+│   ├── JoinScreen.tsx        # Display name entry (legacy)
+│   └── protected-route/
+│       └── UserProtectedRoute.tsx  # Route guard for authenticated users
+├── services/
+│   └── auth.services.ts      # API calls for user credentials (GET /api/user/me)
+├── types/
+│   └── chat.types.ts         # TypeScript definitions (Message, Conversation)
+├── utils/
+│   └── ws.ts                 # Socket.IO client initialization
+└── api/
+    └── client.ts             # Axios HTTP client wrapper
+```
+
+## Authentication Flow
+
+1. **Public Route `/`**: User lands on `LoginPage` with Google OAuth button
+2. **Google Callback**: Backend redirects to `/wellcome` after successful OAuth
+3. **Token Generation `/wellcome`**: `GenerateToken` component exchanges auth code for session token
+4. **Protected Chat `/user/chat`**: `UserProtectedRoute` checks `localStorage.info` before granting access
+5. **Chat Interface**: Once authenticated, user connects to WebSocket and can send/receive real-time messages
+
+```
+LoginPage (Google OAuth)
+    ↓
+Backend Auth Flow
+    ↓
+GenerateToken (store token/user info)
+    ↓
+UserProtectedRoute (check localStorage)
+    ↓
+ChatPane (WebSocket connection)
+```
+
+## Data Types
+
+Defined in [src/types/chat.types.ts](src/types/chat.types.ts):
+
+```typescript
+type Message = {
+  id: number
+  sender: string
+  text: string
+  time: string
+}
+
+type Conversation = {
+  id: string
+  type: 'direct' | 'group'
+  name: string
+  online?: boolean
+  members?: string[]
+  unread: number
+  messages: Message[]
 }
 ```
 
-Keep server models compatible with this shape for smooth integration.
+## Core Components
 
-## How data flows (runtime)
+### [App.tsx](src/App.tsx)
+- **Responsibilities**: Route management, WebSocket connection, message state
+- **Socket Events Handled**:
+  - `connect`: Initial connection established
+  - `userJoinRoomNotify`: User enters room
+  - `msgSendNotify`: New message received
+  - `typingNotify`: User is typing
+  - `stopTypingNotify`: User stopped typing
+- **Socket Events Emitted**:
+  - `joinRoom`: Emit when user enters chat room (with displayName)
+  - `sendMsg`: Emit when user sends message
+  - `typingNotify`: Emit while user is typing
+  - `stopTypingNotify`: Emit when user stops typing (after 1s timeout)
 
-1. User arrives and enters a display name on `JoinScreen`. `submitJoin()` (in `App.tsx`) saves it to local state. Replace this with a sign-in or session creation API as needed.
-2. `App` holds `conversations` in state (initialized with `mockConversations`). It computes `visibleChats` using `filter` and `search` state.
-3. Clicking a chat item in `ChatSidebar` calls `openChat(chatId)` in `App`, which sets `activeConversationId` and clears unread count for that chat.
-4. The `ChatPane` component receives `activeConversation` (derived from `App`) and renders its `messages`. Each message is rendered by `MessageBubble`.
-5. Sending a message: `ChatPane` submits the input form which calls `handleSubmitMessage()` in `App`. Currently this app pushes the new message into the `conversations` array. Replace this with:
+### [LoginPage.tsx](src/pages/LoginPage.tsx)
+- Simple public login page with Google OAuth button
+- Redirects to `${VITE_API_URL}/api/auth/google`
+- No state management needed
 
-	 - an API POST to create a message and/or
-	 - an emit over WebSocket/Sockets to the server.
+### [GenerateToken.tsx](src/components/GenerateToken.tsx)
+- Generates/stores authentication token after OAuth callback
+- Saves user credentials to `localStorage.info` (email, userName, avatar)
+- Redirects to `/user/chat` after successful setup
 
-6. Typing & simulated replies: The UI currently fakes `isTyping` and schedules a mock reply (so the typing indicator and auto-reply demo work). Replace this behavior with actual `typing` socket events.
+### [UserProtectedRoute.tsx](src/components/protected-route/UserProtectedRoute.tsx)
+- Protects `/user/*` routes by checking for `localStorage.info`
+- Redirects to `/` (login) if user not authenticated
+- Uses React Router's `<Outlet />` pattern
 
-## Where to plug real APIs / sockets
+### [ChatPane.tsx](src/components/ChatPane.tsx)
+- Main chat interface with:
+  - Message list (rendered via `MessageBubble` components)
+  - Typing indicator showing who's typing
+  - Message input form
+  - User avatar and room info
+- Props: `messages`, `displayName`, `messageText`, `handelSendMsg`, `typingNotify`
 
-- `submitJoin()` in `src/App.tsx` — call your user/session API and persist a session token.
-- `handleSend()` in `src/App.tsx` — send message to backend. Option A: POST message and optimistic-update UI. Option B: emit socket message and wait for server ack.
-- `createNewConversation()` in `src/App.tsx` — call an endpoint to create a conversation (returns id + initial state) before adding to UI state.
-- `openChat()` — when opening a chat, consider calling an API to mark messages as read (or emit a socket event) and then set `unread` to zero locally.
-- `src/utils/ws.ts` — (if present) is a good place to initialize and export your WebSocket/socket.io client, attach handlers (`message`, `typing`, `online`, `presence`), and provide a small wrapper used by `App.tsx`.
+### [MessageBubble.tsx](src/components/MessageBubble.tsx)
+- Renders individual message with sender name, text, and timestamp
+- Differentiates between sent (current user) and received messages
+- Consistent avatar styling
 
-## Key functions explained (high level)
+## API Integration
 
-- `formatTime(date)` — friendly time formatter used to display timestamps.
-- `initialsFromName(name)` — compute initials for avatar fallback.
-- `colorFromName(name)` / `avatarGradient(name)` — deterministic color generation so each name has a consistent color.
-- `generateId()` — UUID generator for mock message/conversation ids. Replace with server-generated ids when persisting.
+### [services/auth.services.ts](src/services/auth.services.ts)
+```typescript
+// Get current user credentials after authentication
+async setUserCredentials() {
+  const res = await apiClientWraper.get(`${baseUrl}/api/user/me`);
+  localStorage.setItem("info", JSON.stringify({
+    email: res.data.user.email,
+    userName: res.data.user.userName,
+    avatar: res.data.user.avatar,
+  }));
+}
+```
 
-## Component contracts (props)
+### [api/client.ts](src/api/client.ts)
+- Axios wrapper for HTTP requests
+- Handles authentication headers and error responses
+- Used by auth services and future API calls
 
-- `ChatSidebar` props: `displayName`, `visibleChats`, `activeConversationId`, `filter`, `setFilter`, `search`, `setSearch`, `showNewPanel`, `setShowNewPanel`, `newChatType`, `setNewChatType`, `newChatName`, `setNewChatName`, `newChatMembers`, `setNewChatMembers`, `createNewConversation`, `openChat`, `activeConversation`.
+## WebSocket Integration
 
-- `ChatPane` props: `activeConversation`, `messageText`, `setMessageText`, `handleSubmitMessage`, `isTyping`, `setSidebarOpen`.
+### [utils/ws.ts](src/utils/ws.ts)
+```typescript
+function connectWS() {
+  const apiUrl = import.meta.env.VITE_API_URL;
+  return io(apiUrl);
+}
+```
+- Initializes Socket.IO client connected to backend
+- Returns socket instance used in `App.tsx`
+- Configure connection URL via `VITE_API_URL` environment variable
 
-- `MessageBubble` props: `message`, `isMine`, `showSender`.
+## Runtime Data Flow
 
-Keeping these contracts stable will make it easy to swap implementations or add context/state providers later.
+1. User authenticates via Google → backend sets session → redirected to `/wellcome`
+2. `GenerateToken` calls `setUserCredentials()` to fetch user info from `/api/user/me`
+3. User info saved to `localStorage.info`; user navigated to `/user/chat`
+4. `UserProtectedRoute` validates `localStorage.info` exists; grants access
+5. `ChatPane` mounts; `App.tsx` establishes WebSocket connection
+6. Socket handlers set up:
+   - User joins room: `socket.emit("joinRoom", displayName)`
+   - Incoming messages update state: `setMessages(prev => [...prev, msg])`
+   - Typing notifications managed via `setTypingNotify()`
+7. User types message → form submit → `handelSendMsg` → `socket.emit("sendMsg", message)`
+8. Message optimistically added to local state
+9. Backend broadcasts message to all room participants via `msgSendNotify`
 
-## Responsive behavior
+## Environment Variables
 
-- The layout shows both sidebar and chat panes on wide screens; on narrow screens it toggles between them using `sidebarOpen` and a back button in `ChatPane`.
+Create `.env.local` in frontend root:
 
-## Testing and next steps
+```
+VITE_API_URL=http://localhost:5000
+```
 
-1. Wire a WebSocket client in `src/utils/ws.ts` and import it into `App.tsx`.
-2. Replace mock `setConversations(...)` calls with API/socket-backed logic leaving the optimistic UI updates if desired.
-3. Add unit tests around helper functions in `src/utils/chat.ts` (e.g. color hashing, initials, time formatting).
+The `VITE_` prefix makes environment variables accessible via `import.meta.env`.
 
-## Important files
+## Dependencies
 
-- [src/App.tsx](src/App.tsx)
-- [src/utils/chat.ts](src/utils/chat.ts)
-- [src/components/ChatSidebar.tsx](src/components/ChatSidebar.tsx)
-- [src/components/ChatPane.tsx](src/components/ChatPane.tsx)
-- [src/components/MessageBubble.tsx](src/components/MessageBubble.tsx)
-- [src/components/JoinScreen.tsx](src/components/JoinScreen.tsx)
+- **react** — UI framework
+- **react-dom** — React DOM renderer
+- **react-router-dom** — Client-side routing
+- **socket.io-client** — Real-time WebSocket communication
+- **axios** — HTTP client
+- **react-toastify** — Toast notifications
+- **tailwindcss** — Utility-first CSS framework
 
----
+## Key Files Reference
 
-If you want, I can now:
+- [src/App.tsx](src/App.tsx) — Entry point, routing, socket management
+- [src/pages/LoginPage.tsx](src/pages/LoginPage.tsx) — OAuth login
+- [src/components/ChatPane.tsx](src/components/ChatPane.tsx) — Main chat UI
+- [src/components/MessageBubble.tsx](src/components/MessageBubble.tsx) — Message display
+- [src/services/auth.services.ts](src/services/auth.services.ts) — User API calls
+- [src/utils/ws.ts](src/utils/ws.ts) — WebSocket connection
+- [src/types/chat.types.ts](src/types/chat.types.ts) — Type definitions
 
-- Wire a minimal `src/utils/ws.ts` socket client and show where to hook events, or
-- Replace `handleSend()` with an example using fetch + optimistic UI, or
-- Add unit tests for `utils/chat.ts`.
+## Next Steps
 
-Tell me which next step you'd like.
+- Extend `ChatPane` with room/conversation selection UI
+- Add more WebSocket events (read receipts, online status, etc.)
+- Implement message persistence via API
+- Add user profile and settings pages
+- Implement message search and filtering
 
