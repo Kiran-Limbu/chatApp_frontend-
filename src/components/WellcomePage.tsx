@@ -4,9 +4,11 @@ import { setUserCredentials } from "../services/auth.services";
 
 const WellcomePage = () => {
   const navigate = useNavigate();
-  const [username, setUsername] = useState("there");
+  const [username, setUsername] = useState("");
 
   useEffect(() => {
+    void setUserCredentials();
+
     const storedUser = localStorage.getItem("info");
 
     if (storedUser) {
@@ -18,9 +20,6 @@ const WellcomePage = () => {
       }
     }
 
-    void setUserCredentials().then((data) => {
-      if (data?.user?.userName) setUsername(data.user.userName);
-    });
   }, []);
 
   return (

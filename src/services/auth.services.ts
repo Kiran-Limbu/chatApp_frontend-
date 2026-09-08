@@ -14,7 +14,6 @@ export async function setUserCredentials() {
         avatar: res.data.user.avatar,
       }),
     );
-    return res?.data ?? res;
   } catch (error) {
     console.error(`error: ${error}`);
     toast.error(`error: ${error}`)
