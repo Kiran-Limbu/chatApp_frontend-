@@ -1,23 +1,20 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { setUserCredentials } from "../services/auth.services";
+import { setUserCredentials } from "../services/auth.services.ts";
 
 const WellcomePage = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
 
+  setUserCredentials();
+  
   useEffect(() => {
-    void setUserCredentials();
 
     const storedUser = localStorage.getItem("info");
 
     if (storedUser) {
-      try {
         const user = JSON.parse(storedUser);
-        if (user.userName) setUsername(user.userName);
-      } catch {
-        localStorage.removeItem("info");
-      }
+        if (user.userName) setUsername(user.userName || "There");
     }
 
   }, []);
