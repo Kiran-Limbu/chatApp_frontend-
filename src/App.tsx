@@ -5,8 +5,8 @@ import connectWS from "./utils/ws.ts";
 import LoginPage from "./pages/LoginPage.tsx";
 import { Route, Routes } from "react-router-dom";
 import UserProtectedRoute from "./components/protected-route/UserProtectedRoute.tsx";
-import GenerateToken from "./components/GenerateToken.tsx";
 import { ToastContainer } from "react-toastify/unstyled";
+import WellcomePage from "./components/WellcomePage.tsx";
 
 function App() {
   const timer = useRef(null as any);
@@ -137,7 +137,7 @@ function App() {
 
       <Routes>
         <Route path="/" element={<LoginPage />} />
-        <Route path="/wellcome" element={<GenerateToken />} />
+        <Route path="/wellcome" element={<WellcomePage />} />
         
         //only auth user can access these route
         <Route path="/user" element={<UserProtectedRoute />}>

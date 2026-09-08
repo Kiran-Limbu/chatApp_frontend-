@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { setUserCredentials } from "../services/auth.services";
 
-const GenerateToken = () => {
+const WellcomePage = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState("there");
 
@@ -47,4 +47,4 @@ const GenerateToken = () => {
   );
 };
 
-export default GenerateToken;
+export default WellcomePage;
