@@ -1,11 +1,10 @@
 import { toast } from "react-toastify";
 import apiClientWraper from "../api/client.ts";
 
-const baseUrl = import.meta.env.VITE_API_URL;
 
 export async function setUserCredentials() {
   try {
-    const res = await apiClientWraper.get(`${baseUrl}/api/user/me`);
+    const res = await apiClientWraper.get("/api/user/me");
     localStorage.setItem(
       "info",
       JSON.stringify({
