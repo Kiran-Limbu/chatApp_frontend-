@@ -6,7 +6,8 @@ import LoginPage from "./pages/LoginPage.tsx";
 import { Route, Routes } from "react-router-dom";
 import UserProtectedRoute from "./components/protected-route/UserProtectedRoute.tsx";
 import { ToastContainer } from "react-toastify/unstyled";
-import WellcomePage from "./components/WellcomePage.tsx";
+import WellcomePage from "./pages/WellcomePage.tsx";
+import Creator from "./components/Creator.tsx";
 
 function App() {
   const timer = useRef(null as any);
@@ -100,7 +101,7 @@ function App() {
   };
 
   return (
-    <>
+    <div className="flex flex-col min-h-screen">
       <ToastContainer
         position="top-right"
         autoClose={5000}
@@ -135,29 +136,33 @@ function App() {
         </div>
       )} */}
 
-      <Routes>
-        <Route path="/" element={<LoginPage />} />
-        <Route path="/wellcome" element={<WellcomePage />} />
-        
-        //only auth user can access these route
-        <Route path="/user" element={<UserProtectedRoute />}>
-          <Route
-            path="chat"
-            element={
-              <ChatPane
-                messages={messages}
-                setDisplayName={setDisplayName}
-                displayName={displayName}
-                handelSendMsg={handelSendMsg}
-                setMessageText={setMessageText}
-                messageText={messageText}
-                typingNotify={typingNotify}
-              />
-            }
-          />
-        </Route>
-      </Routes>
-    </>
+      <main className="flex-1">
+        <Routes>
+          <Route path="/" element={<LoginPage />} />
+          <Route path="/wellcome" element={<WellcomePage />} />
+          
+          //only auth user can access these route
+          <Route path="/user" element={<UserProtectedRoute />}>
+            <Route
+              path="chat"
+              element={
+                <ChatPane
+                  messages={messages}
+                  setDisplayName={setDisplayName}
+                  displayName={displayName}
+                  handelSendMsg={handelSendMsg}
+                  setMessageText={setMessageText}
+                  messageText={messageText}
+                  typingNotify={typingNotify}
+                />
+              }
+            />
+          </Route>
+        </Routes>
+      </main>
+      
+      <Creator />
+    </div>
   );
 }
 

@@ -68,9 +68,9 @@ const LoginPage = () => {
           onClick={(e) => {
             handleGoogleAuth(e)
           }}
-          className="flex min-h-[54px] w-full items-center justify-center gap-3 rounded-2xl border border-slate-700/80 bg-slate-950/60 px-6 text-sm font-semibold text-slate-100 transition hover:border-slate-500 hover:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+          className="flex min-h-[54px] w-full items-center justify-center gap-3 rounded-2xl border border-slate-700/80 bg-slate-950/60 px-6 text-md font-semibold text-slate-100 transition hover:border-slate-500 hover:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
           >
-          <span className="text-lg font-bold text-white" aria-hidden="true">G</span>
+          <span className="text-lg font-semibold text-white" aria-hidden="true">G</span>
           Sign in with Google
         </button>
         <div>
