@@ -2,7 +2,7 @@ import apiClientWraper from "../api/client.ts";
 
 export async function setUserCredentials(id: any) {
   try {
-    const res = await apiClientWraper.get(`/api/user/me/${id}`);
+    const res = await apiClientWraper.get(`/api/user/get/${id}`);
 
     return res.data;
   } catch (error) {
