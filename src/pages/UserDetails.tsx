@@ -1,22 +1,26 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { setUserCredentials } from "../services/auth.services.ts";
+import { useParams } from "react-router-dom";
+import { toast } from "react-toastify";
+import axios from "axios";
 
-const WellcomePage = () => {
+const UserDetails = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
+  const { id } = useParams();
 
   useEffect(() => {
     const loadUser = async () => {
-      await setUserCredentials();
+      try {
+        const data = await setUserCredentials(id);
 
-      const storedUser = localStorage.getItem("info");
-
-      if (storedUser) {
-        const user = JSON.parse(storedUser);
-
-        if (user.userName) {
-          setUsername(user.userName || "There");
+        if (data.userName) {
+          setUsername(data.userName || "There");
+        }
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          toast.error(error.response?.data?.message);
         }
       }
     };
@@ -38,7 +42,7 @@ const WellcomePage = () => {
         </p>
         <button
           type="button"
-          onClick={() => navigate("/user/chat")}
+          onClick={() => navigate(`/user/chat/${id}`)}
           className="flex min-h-[54px] text-md w-full items-center justify-center gap-3 rounded-2xl border border-slate-700/80 bg-slate-950/60 px-6 font-semibold text-slate-100 transition hover:border-slate-500 hover:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
         >
           Enter chat
@@ -48,4 +52,4 @@ const WellcomePage = () => {
   );
 };
 
-export default WellcomePage;
+export default UserDetails;

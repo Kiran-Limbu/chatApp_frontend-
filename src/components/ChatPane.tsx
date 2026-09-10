@@ -1,7 +1,13 @@
 import { MessageBubble } from "./MessageBubble";
 import type { Message } from "../types/chat.types";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { setUserCredentials, logoutUser } from "../services/auth.services.ts";
+import { AlertCircle, X, Loader2 } from "lucide-react";
+import bgImage from "../assets/bg-image.jpg";
+import { toast } from "react-toastify";
+import axios from "axios";
+
 
 interface ChatPaneProps {
   messages: Message[];
@@ -25,24 +31,116 @@ export function ChatPane({
 
   const navigate = useNavigate();
   const [imgUrl, setImgUrl] = useState("");
-
+  const [error, setError] = useState(false);
+  const [errorText, setErrorText] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const {id} = useParams();
+  
   useEffect(() => {
-    const storedUser = localStorage.getItem("info");
+    const getUserData = async () =>{
+      setLoading(true);
+      try {
+        const storedUser = await setUserCredentials(id);
+        
+        if (storedUser) {
+          setDisplayName(storedUser?.userName);
+          setImgUrl(storedUser?.avatar);
+        }
+        setLoading(false);
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+    toast.error(error.response?.data?.message);
+    setErrorText(error.response?.data?.message);
+    setError(true);
+    setLoading(false);
+  }
+  }
+    } 
 
-    if (storedUser) {
-      const user = JSON.parse(storedUser);
-      setDisplayName(user?.userName);
-      setImgUrl(user?.avatar);
-    }
+    getUserData();
   }, []);
 
-  const handelLogout = () =>{
-    localStorage.removeItem("info");
+  const handelLogout =  async () =>{
+       await logoutUser();
     navigate("/");
   }
+
+  if(loading){
+    return(
+      <div 
+        className="flex h-screen items-center justify-center bg-slate-950 text-slate-100"
+        style={{
+          backgroundImage: `url(${bgImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+        }}
+      >
+        <div className="absolute inset-0 bg-black/40 pointer-events-none" />
+        <div className="relative z-10 flex flex-col items-center gap-4">
+          <Loader2 className="h-12 w-12 text-cyan-400 animate-spin" />
+          <p className="text-lg font-semibold text-slate-200">
+            Loading your chat...
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if(error){
+    return(
+      <div className="flex h-screen items-center justify-center bg-slate-950 p-4">
+        <div className="w-full max-w-md rounded-lg border border-rose-500/30 bg-gradient-to-br from-slate-900 to-slate-800 p-6 shadow-2xl">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0">
+              <AlertCircle className="h-8 w-8 text-rose-500" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-rose-400">
+                Error
+              </h3>
+              <p className="mt-2 text-sm text-slate-300">
+                {errorText || "An unexpected error occurred. Please try again."}
+              </p>
+            </div>
+            <button
+              onClick={() => setError(false)}
+              className="flex-shrink-0 text-slate-400 hover:text-slate-200 transition"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <div className="mt-6 flex gap-3">
+            <button
+              onClick={() => navigate("/")}
+              className="flex-1 rounded-lg bg-rose-500 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-600 transition focus:outline-none focus:ring-2 focus:ring-rose-400/50"
+            >
+              Go Back
+            </button>
+            <button
+              onClick={() => setError(false)}
+              className="flex-1 rounded-lg border border-slate-600 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-200 hover:border-slate-500 hover:bg-slate-700 transition focus:outline-none focus:ring-2 focus:ring-slate-400/50"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
   return (
-    <main className="flex h-screen flex-col overflow-hidden bg-slate-950 text-slate-100">
-      <header className="border-b border-slate-800 bg-slate-900/90 px-4 py-3 sm:px-6 sm:py-4">
+    <main 
+      className="flex h-screen flex-col overflow-hidden bg-slate-950 text-slate-100"
+      style={{
+        backgroundImage: `url(${bgImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed',
+      }}
+    >
+      <div className="absolute inset-0 bg-black/40 pointer-events-none" />
+      <div className="relative z-10 flex h-screen flex-col overflow-hidden">
+      <header className="border-b border-slate-800 bg-slate-900/80 px-4 py-3 sm:px-6 sm:py-4 backdrop-blur-sm">
         <div className="mx-auto grid w-full max-w-4xl grid-cols-[1fr_auto] items-center gap-x-4 gap-y-3 sm:grid-cols-[1fr_auto_1fr]">
           <div className="flex min-w-0 items-center gap-3">
             {imgUrl ? (
@@ -80,7 +178,6 @@ export function ChatPane({
               <p className="text-xs font-semibold text-slate-400">Online</p>
             </div>
             <button
-              type="button"
               onClick={handelLogout}
               className="rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-rose-400/50 hover:bg-rose-500/10 hover:text-rose-200 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 sm:px-4 sm:text-sm"
             >
@@ -113,7 +210,7 @@ export function ChatPane({
         )}
       </div>
 
-      <div className="shrink-0 border-t border-slate-800 bg-slate-950/95 px-4 py-4 sm:px-6">
+      <div className="shrink-0 border-t border-slate-800 bg-slate-950/80 px-4 py-4 sm:px-6 backdrop-blur-sm">
         <div className="mx-auto flex w-full max-w-4xl justify-center">
           <form
             onSubmit={handelSendMsg}
@@ -137,6 +234,7 @@ export function ChatPane({
             </button>
           </form>
         </div>
+      </div>
       </div>
     </main>
   );

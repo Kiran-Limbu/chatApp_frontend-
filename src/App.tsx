@@ -4,10 +4,9 @@ import type { Message } from "./types/chat.types.ts";
 import connectWS from "./utils/ws.ts";
 import LoginPage from "./pages/LoginPage.tsx";
 import { Route, Routes } from "react-router-dom";
-import UserProtectedRoute from "./components/protected-route/UserProtectedRoute.tsx";
 import { ToastContainer } from "react-toastify/unstyled";
-import WellcomePage from "./pages/WellcomePage.tsx";
 import Creator from "./components/Creator.tsx";
+import UserDetails from "./pages/UserDetails.tsx";
 
 function App() {
   const timer = useRef(null as any);
@@ -76,7 +75,6 @@ function App() {
     };
   }, [messageText]);
 
-
   const handelSendMsg = (e: any) => {
     e.preventDefault();
     const trimmed = messageText.trim();
@@ -102,65 +100,30 @@ function App() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick={false}
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
-      {/* 
-      {popupJoinScreen ? (
-       <LoginPage 
-       setPopupJoinScreen={setPopupJoinScreen}
-       />
-      ) : (
-        <div className="min-h-screen w-full bg-slate-950 text-slate-100">
-          <div className="mx-auto flex min-h-screen max-w-[1560px] flex-col px-4 py-5 sm:px-6 lg:px-8">
-            <div className="grid flex-1 gap-4 ">
+      <ToastContainer />
+
+      <main className="flex-1">
+        <Routes>
+          <Route path="/" element={<LoginPage />} />
+          <Route path="/get/:id" element={<UserDetails />} />
+          {/* only auth user can access these route */}
+          <Route
+            path="/user/chat/:id"
+            element={
               <ChatPane
                 messages={messages}
+                setDisplayName={setDisplayName}
                 displayName={displayName}
                 handelSendMsg={handelSendMsg}
                 setMessageText={setMessageText}
                 messageText={messageText}
                 typingNotify={typingNotify}
               />
-            </div>
-          </div>
-        </div>
-      )} */}
-
-      <main className="flex-1">
-        <Routes>
-          <Route path="/" element={<LoginPage />} />
-          <Route path="/wellcome" element={<WellcomePage />} />
-          
-          //only auth user can access these route
-          <Route path="/user" element={<UserProtectedRoute />}>
-            <Route
-              path="chat"
-              element={
-                <ChatPane
-                  messages={messages}
-                  setDisplayName={setDisplayName}
-                  displayName={displayName}
-                  handelSendMsg={handelSendMsg}
-                  setMessageText={setMessageText}
-                  messageText={messageText}
-                  typingNotify={typingNotify}
-                />
-              }
-            />
-          </Route>
+            }
+          />
         </Routes>
       </main>
-      
+
       <Creator />
     </div>
   );
