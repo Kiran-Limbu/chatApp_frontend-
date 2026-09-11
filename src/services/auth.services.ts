@@ -2,6 +2,7 @@ import apiClientWraper from "../api/client.ts";
 
 export async function setUserCredentials(id: any) {
   try {
+    // New api hit point 
     const res = await apiClientWraper.get(`/api/user/get/${id}`);
 
     return res.data;
